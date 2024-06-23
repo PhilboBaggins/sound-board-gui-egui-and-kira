@@ -34,7 +34,7 @@ struct MyApp {
 
 impl Default for MyApp {
     fn default() -> Self {
-        let mut manager = AudioManager::<DefaultBackend>::new(AudioManagerSettings::default()).unwrap();
+        let manager = AudioManager::<DefaultBackend>::new(AudioManagerSettings::default()).unwrap();
 
         // TODO: Generate this list from a directory or config file
         let sound_data = vec![

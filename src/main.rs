@@ -1,6 +1,5 @@
 use eframe::egui;
 use eframe::egui::CentralPanel;
-use egui_extras::{TableBuilder, Column};
 
 use kira::{
 	manager::{
@@ -29,20 +28,36 @@ fn main() -> Result<(), eframe::Error> {
 
 struct MyApp {
     manager: AudioManager::<DefaultBackend>,
-    sound_data: StaticSoundData,
+    sound_data: Vec<StaticSoundData>,
+    grid_width: usize,
 }
 
 impl Default for MyApp {
     fn default() -> Self {
         let mut manager = AudioManager::<DefaultBackend>::new(AudioManagerSettings::default()).unwrap();
 
-        // TODO: Lots of them
-        let sample_file = "sample.wav";
-        let sound_data = StaticSoundData::from_file(sample_file).unwrap();
+        // TODO: Generate this list from a directory or config file
+        let sound_data = vec![
+            // 0 to 3
+            StaticSoundData::from_file("sample_0.wav").unwrap(),
+            StaticSoundData::from_file("sample_1.wav").unwrap(),
+            StaticSoundData::from_file("sample_2.wav").unwrap(),
+            StaticSoundData::from_file("sample_3.wav").unwrap(),
+
+            // 4 to 7
+            StaticSoundData::from_file("sample_0.wav").unwrap(),
+            StaticSoundData::from_file("sample_1.wav").unwrap(),
+            StaticSoundData::from_file("sample_2.wav").unwrap(),
+            StaticSoundData::from_file("sample_3.wav").unwrap(),
+        ];
+
+        // TODO: Make this dynamic
+        let grid_width = 4;
 
         Self {
             manager: manager,
             sound_data: sound_data,
+            grid_width: grid_width,
         }
     }
 }
@@ -57,31 +72,26 @@ impl eframe::App for MyApp {
             ..Default::default()
         };
 
-        let num_cols = 4; // TODO: Use this to make the columns below
-        let col_width = 100.0 / num_cols as f32;
-
-        let num_rows = 10;
-        let row_height = 100.0 / num_rows as f32;
-
         CentralPanel::default().frame(panel_frame).show(ctx, |ui| {
-            TableBuilder::new(ui)
-                .column(Column::exact(col_width)) //.column(Column::auto())
-                .column(Column::exact(col_width)) //.column(Column::auto())
-                .column(Column::exact(col_width)) //.column(Column::auto())
-                .column(Column::exact(col_width)) //.column(Column::auto())
-                .body(|mut body| {
-                    for _ in 0..num_rows {
-                        body.row(row_height, |mut row| {
-                            for _ in 0..num_cols {
-                                row.col(|ui| {
-                                    if ui.button("AAA").clicked() {
-                                        self.manager.play(self.sound_data.clone()).unwrap();
-                                    }
-                                });
-                            }
-                        });
-                    }
-                });
+
+            ctx.style_mut(|style| {
+                style.text_styles.insert(
+                    egui::TextStyle::Button,
+                    egui::FontId::new(32.0, egui::FontFamily::Proportional),
+                );
             });
+
+            egui::Grid::new("grid").show(ui, |ui| {
+                for i in 0..self.sound_data.len() {
+                    let sound_name = format!("Sound {}", i); // TODO: Use sample name
+                    if ui.button(sound_name).clicked() {
+                        self.manager.play(self.sound_data[i].clone()).unwrap();
+                    }
+                    if i % self.grid_width == self.grid_width - 1 {
+                        ui.end_row();
+                    }
+                }
+            });
+        });
     }
 }
